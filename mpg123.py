@@ -84,6 +84,9 @@ class Mpg123:
     class ID3Exception(Exception):
         pass
 
+    class VolumeException(Exception):
+        pass
+
     def plain_strerror(self, errcode):
         self._lib.mpg123_plain_strerror.restype = ctypes.c_char_p
         return self._lib.mpg123_plain_strerror(errcode).decode()
@@ -165,6 +168,19 @@ class Mpg123:
 
     def get_width_by_encoding(self, encoding):
         return self._lib.mpg123_encsize(encoding)
+
+    def get_volumes(self):
+        base = ctypes.c_double(0)
+        really = ctypes.c_double(0)
+        rva_db = ctypes.c_double(0)
+
+        errcode = self._lib.mpg123_getvolume(self.handler,
+                                             ctypes.pointer(base),
+                                             ctypes.pointer(really),
+                                             ctypes.pointer(rva_db))
+        if errcode != OK:
+            raise self.VolumeException(self.plain_strerror(errcode))
+        return (base.value, really.value, rva_db.value)
 
     def length(self):
         errcode = self._lib.mpg123_length(self.handle)
